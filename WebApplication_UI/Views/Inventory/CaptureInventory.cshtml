@@ -1,0 +1,320 @@
+﻿@model WebApplication_UI.Models.Product
+@{
+    ViewBag.Title = "CaptureInventory";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var count = 0;
+}
+
+<h2><b>Capture Inventory</b></h2>
+<div>
+    <table>
+        <tr width="25px">
+            <td></td>
+        </tr>
+        <tr>
+            <td>Name</td>
+            <td>:</td>
+            <td>
+                @Html.TextBoxFor(c => c.Name, new { @id = "txtName", required = "@required", @placeholder = "Product Name" })
+                @Html.Label("This field is Required", new { @id = "lblName",style = "display:none ; color:red" })
+
+
+            </td>
+        </tr>
+        <tr>
+            <td>Description</td>
+            <td>:</td>
+            <td>
+                @Html.TextAreaFor(c => c.Description, new { @id = "txtDescription", required = "@required", @placeholder = "Product Description" })
+                @Html.Label("This field is Required", new { @id = "lblDescription", style = "display:none ; color:red" })
+             </td>
+        </tr>
+        <tr>
+            <td>Price</td>
+            <td>:</td>
+            <td>
+                @Html.TextBoxFor(c => c.Price, new { @id = "txtPrice", required = "@required", @placeholder = "Product Price" })
+                @Html.Label("This field is Required", new { @id = "lblPrice", style = "display:none ; color:red" })
+
+
+                @Html.HiddenFor(c => c.ItemId, new { @id = "hdnItemId" })
+            </td>
+        </tr>
+
+        <tr width="500px">
+            <td></td>
+        </tr>
+        <tr>
+            <td width="100px" height="100px" >
+            <button id="btnSubmit" value="Save"  style="width:75px;height:25px"> Save </button>
+            </td>
+            <td></td>
+            <td width="100px" height="100px">
+                <button id="btnCancel" value="Save" style="width:75px;height:25px">Cancel</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+    <div >
+    
+    <table  id="tblData">
+        <thead style=" ">
+            <tr style="border:thick;border-color:black;  text-align: center; background-color:yellow;">
+                <th style="display:none">
+                    <b>  ItemId</b>
+                </th>
+                <th width="50px">
+                    <b> Sl.No</b>
+                </th>
+                <th width="50px">
+                    <b> Name</b>
+                </th>
+                <th width="100px">
+                    <b> Description</b>
+                </th>
+                <th width="50px">
+                    <b> Price</b>
+                </th>
+                <th width="100px">
+                    <b> Action</b>
+                </th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ProInfo)
+            {
+                count++;
+                <tr style="border:thick; border-color:black; background-color:lightyellow;">
+                    <td style="display:none; text-align: center;">
+                        @Html.DisplayFor(modelItem => item.ItemId)
+                    </td>
+                    <td style="text-align: center;">
+                        @count
+                    </td>
+                    <td style="text-align: center;">
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td style="text-align: center;">
+                        @Html.DisplayFor(modelItem => item.Description)
+                    </td>
+                    <td style="text-align: right;">
+                        @Html.DisplayFor(modelItem => item.Price)
+                    </td>
+                    <td class="action text-center">
+                        <a onclick="update(@item.ItemId)" href="#"><i>Edit</i></a>
+                        <a onclick="delpart(@item.ItemId)" href="#"><i>Delete</i></a>
+                    </td>
+
+                </tr>
+            }
+        </tbody> 
+    </table>
+</div>
+<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script>
+    $(document).ready(function () {
+        clear();
+        if( $('#tblData tbody tr').length <=0)
+        {
+            var rows = "<tr>" + "<td colspan=5 style=' text-align: center;'> No Data Found </td>" +"<tr>";
+            $('#tblData tbody').append(rows);
+        }
+    });
+
+    //---Clear All controls---
+    function clear() {
+        $('#txtName').val("") ;
+        $('#txtDescription').val("") ;
+        $('#txtPrice').val("") ;
+        $("#lblName").hide();
+        $("#lblDescription").hide();
+        $("#lblPrice").hide();
+    }
+    // ---Price value allows decimal only----------
+    $('#txtPrice').keypress(function (event) {
+
+        if ((event.which != 46 || $(this).val().indexOf('.') != -1) &&
+          ((event.which < 48 || event.which > 57) &&
+            (event.which != 0 && event.which != 8))) {
+            event.preventDefault();
+        }
+    });
+    //--------validation--------
+    function validate()
+    {
+        var valid = true;
+        if ($('#txtName').val().trim() == "")
+        {
+            valid = false;
+            $("#lblName").show();
+        }
+         if ($('#txtDescription').val().trim() == "") {
+            valid = false;
+            $("#lblDescription").show();
+
+        }
+         if ($('#txtPrice').val().trim() == "") {
+            valid = false;
+            $("#lblPrice").show();
+        }
+        return valid;
+    }
+    //--btn events--------------
+    $("#btnSubmit").click(function () {
+        debugger;
+        if(validate())
+            {
+        if( $("#btnSubmit").html().trim().toLowerCase()=="save")
+        {
+            Action="Save";
+        }
+        {
+            Action="Update";
+        }
+        if (!confirm('Are you sure, you want to continue?')) {
+            e.preventDefault();
+        }
+        else {
+        var name = $('#txtName').val();
+        var description = $('#txtDescription').val();
+        var price = $('#txtPrice').val();
+        var ItemId = $('#hdnItemId').val();
+        $.ajax({
+
+            async:true,
+            url: "InsertUpdateItem",
+            dataType: "json",
+            data: { Name: name, Description: description, Price: price, Action: Action, ItemId: ItemId },
+            contentType: 'application/json; charset=utf-8',
+            success: function (data) {
+                debugger;
+                var json = $.parseJSON(data);
+                alert(json.Output.toString());
+                clear();
+                $('#tblData tbody').empty();
+                var Count=0;
+                if (json.ProInfo.length > 0) {
+                    $.each(json.ProInfo, function (i, item) {
+                        debugger;
+                        Count++;
+                        var rows = "<tr style='border:thick; border-color:black; background-color:lightyellow;'>" +
+                                            "<td style='display:none; text-align: center;'>" + item.ItemId + "</td>" +
+                                            "<td style='text-align: center;' >" + Count + "</td>" +
+                                              "<td style='text-align: center;' >" + item.Name + "</td>" +
+                                               "<td style='text-align: center;'>" + item.Description + "</td>" +
+                                                "<td style='text-align: center;'>" + item.Price + "</td>" +
+                                               " <td>" +
+                            "<a onclick='update(" + item.ItemId + ")' href='#'><i>Edit</i></a>" +
+                            "<a onclick='delpart(" + item.ItemId + ")' href='#' style='padding-left: 5px;'><i>Delete</i></a>" +
+                                "</td>"
+                                             + "</tr>";
+                        $('#tblData tbody').append(rows);
+                    });
+                }
+            },
+            error: function (jqXHR, exception) {
+                debugger;
+                alert('Error occured');
+            }
+        });
+        }
+       }
+    });
+
+
+    $("#btnCancel").click(function () {
+        clear();
+    });
+
+
+    //----link function-------------
+    function update( ItemId)
+    {
+        debugger;
+        if (!confirm('Are you sure , you want to update?')) {
+            e.preventDefault();
+        }
+        else {
+        $.ajax({
+            async:true,
+            url: "GetRecordsbyId",
+            dataType: "json",
+            data: { ItemId: ItemId },
+            contentType: 'application/json; charset=utf-8',
+            success: function (data) {
+                debugger;
+                var json = $.parseJSON(data);
+
+                $('#hdnItemId').val(json.ItemId);
+                $('#txtName').val(json.Name) ;
+                $('#txtDescription').val(json.Description);
+                $('#txtPrice').val(json.Price);
+                $("#btnSubmit").html('Update')
+            },
+            error: function (jqXHR, exception) {
+                debugger;
+                alert('Error occured');
+            }
+        });
+
+    }
+    }
+    function delpart( ItemId)
+    {
+        debugger;
+        debugger;
+        if (!confirm('Are you sure, you want to delete  ?')) {
+            e.preventDefault();
+        }
+        else {
+        $.ajax({
+            async:true,
+            url: "DeleteItem",
+            dataType: "json",
+            data: { ItemId: ItemId },
+            contentType: 'application/json; charset=utf-8',
+            success: function (data) {
+                debugger;
+                debugger;
+                var json = $.parseJSON(data);
+                alert(json.Output.toString());
+                clear();
+                $('#tblData tbody').empty();
+                var Count = 0;
+                if (json.ProInfo.length > 0) {
+                    $.each(json.ProInfo, function (i, item) {
+                        debugger;
+                        Count++;
+                        var rows = "<tr style='border:thick; border-color:black; background-color:lightyellow;'>" +
+                                            "<td style='display:none; text-align: center;'>" + item.ItemId + "</td>" +
+                                            "<td style='text-align: center;' >" + Count + "</td>" +
+                                              "<td style='text-align: center;' >" + item.Name + "</td>" +
+                                               "<td style='text-align: center;'>" + item.Description + "</td>" +
+                                                "<td style='text-align: center;'>" + item.Price + "</td>" +
+                                               " <td>" +
+                            "<a onclick='update(" + item.ItemId + ")' href='#'><i>Edit</i></a>" +
+                            "<a onclick='delpart(" + item.ItemId + ")' href='#' style='padding-left: 5px;><i>Delete</i></a>" +
+                                "</td>"
+                                             + "</tr>";
+
+                        $('#tblData tbody').append(rows);
+
+                    });
+                }
+                else {
+                    var rows = "<tr>" + "<td colspan=5 style=' text-align: center;'> No Data Found </td>" + "<tr>";
+                    $('#tblData tbody').append(rows);
+                }
+
+            },
+            error: function (jqXHR, exception) {
+                debugger;
+                alert('Error occured');
+            }
+        });
+    }
+    }
+
+</script>
